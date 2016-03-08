@@ -22,6 +22,8 @@ prepare $THIS_DIR
 SOURCE_VERSION=${PACKAGE_VERSION}
 if [[ $PACKAGE_VERSION =~ "-no-asserts" ]]; then
   SOURCE_VERSION=${PACKAGE_VERSION%-no-asserts}
+elif [[ $PACKAGE_VERSION =~ "-asserts" ]]; then
+  SOURCE_VERSION=${PACKAGE_VERSION%-asserts}
 fi
 
 ARCHIVE_EXT="tar.gz"

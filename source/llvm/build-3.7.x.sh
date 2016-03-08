@@ -16,7 +16,9 @@ set -eu
 set -o pipefail
 
 function build_llvm() {
-  header $PACKAGE $PACKAGE_VERSION
+  header $PACKAGE $PACKAGE_VERSION \
+      "$THIS_DIR/llvm-${SOURCE_VERSION}.src.${ARCHIVE_EXT}" \
+      "llvm-${SOURCE_VERSION}.src" "llvm-${PACKAGE_VERSION}.src"
   LLVM=llvm-$LLVM_VERSION
 
   # Cleanup possible leftovers
@@ -26,19 +28,19 @@ function build_llvm() {
   # Crappy CentOS 5.6 doesnt like us to build Clang, so skip it
   cd tools
   # CLANG
-  tar xJf ../../cfe-$PACKAGE_VERSION.src.tar.xz
-  mv cfe-$PACKAGE_VERSION.src clang
+  tar xJf ../../cfe-$SOURCE_VERSION.src.tar.xz
+  mv cfe-$SOURCE_VERSION.src clang
 
   # CLANG Extras
   cd clang/tools
-  tar xJf ../../../../clang-tools-extra-$PACKAGE_VERSION.src.tar.xz
-  mv clang-tools-extra-$PACKAGE_VERSION.src extra
+  tar xJf ../../../../clang-tools-extra-$SOURCE_VERSION.src.tar.xz
+  mv clang-tools-extra-$SOURCE_VERSION.src extra
   cd ../../
 
   # COMPILER RT
   cd ../projects
-  tar xJf ../../compiler-rt-$PACKAGE_VERSION.src.tar.xz
-  mv compiler-rt-$PACKAGE_VERSION.src compiler-rt
+  tar xJf ../../compiler-rt-$SOURCE_VERSION.src.tar.xz
+  mv compiler-rt-$SOURCE_VERSION.src compiler-rt
   cd ../../
 
   mkdir -p build-$LLVM
@@ -56,17 +58,21 @@ function build_llvm() {
     CMAKE_EXEC=$BUILD_DIR/cmake-$CMAKE_VERSION/bin/cmake
   fi
 
+  LLVM_BUILD_TYPE=Release
+  if [[ "$PACKAGE_VERSION" =~ "-asserts" ]]; then
+    LLVM_BUILD_TYPE=Release+Asserts
+  fi
+
   # Invoke CMake with the correct configuration
   wrap $CMAKE_EXEC ../$LLVM.src \
-      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_BUILD_TYPE=${LLVM_BUILD_TYPE} \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL \
       -DLLVM_TARGETS_TO_BUILD=X86 \
       -DLLVM_ENABLE_RTTI=ON \
       -DLLVM_PARALLEL_COMPILE_JOBS=${BUILD_THREADS:-4} \
       -DLLVM_PARALLEL_LINK_JOBS=${BUILD_THREADS:-4} \
       -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE \
-      -DLLVM_USE_INTEL_JITEVENTS=ON \
-      -DLLVM_USE_OPROFILE=ON
+      -DLLVM_USE_INTEL_JITEVENTS=ON
 
   wrap make -j${BUILD_THREADS:-4} install
   cd tools/clang
