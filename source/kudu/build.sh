@@ -85,12 +85,15 @@ function build {
   fi
 
   setup_package_build $PACKAGE $PACKAGE_VERSION
+  add_gcc_to_ld_library_path
 
   # Kudu's dependencies are not in the toolchain. They could be added later.
   cd thirdparty
   # For some reason python 2.7 from Kudu's thirdparty doesn't build on CentOS 6. It's
   # not really needed since the toolchain provides python 2.7. To skip the thirdparty
   # build, "python2.7" needs to be in the PATH.
+  # Need to unset LD_LIBRARY_PATH in case the thirdparty build deteects ninja and decides
+  # to use it. ninja depends on the system libstdc++.so on some systems.
   OLD_PATH="$PATH"
   PATH="$BUILD_DIR/python-$PYTHON_VERSION/bin:$OLD_PATH"
   wrap ./build-if-necessary.sh
