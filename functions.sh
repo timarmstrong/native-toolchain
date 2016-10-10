@@ -243,15 +243,26 @@ function finalize_package_build() {
   local PKG_NAME=$1
   local PKG_VERSION=$2
 
+  local PKG_BUILD_DIRNAME=${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}
+  local PKG_BUILD_DIR="$BUILD_DIR/$PKG_BUILD_DIRNAME"
+
+  if [ $PKG_NAME != gcc ]; then
+    pushd "$BUILD_DIR"
+    # Add symlinks to required libraries.
+    # Make sure that libstdc++ and libgcc are linked where they will be on the RPATH.
+    # We need to use relative paths here to get relative symlinks.
+    symlink_required_libs gcc-${GCC_VERSION}/lib64 "$PKG_BUILD_DIRNAME"
+    popd
+  fi
+
   # Build Package
   build_dist_package 2>&1 | tee -a $BUILD_LOG
 
   # For all binaries of the package symlink to bin
-  if [[ -d $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin ]]; then
+  if [[ -d "$PKG_BUILD_DIR"/bin ]]; then
     mkdir -p $BUILD_DIR/bin
-    for p in `ls $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin`; do
-      ln -f -s $BUILD_DIR/${PKG_NAME}-${PKG_VERSION}${PATCH_VERSION}/bin/$p \
-          $BUILD_DIR/bin/$p
+    for p in `ls "$PKG_BUILD_DIR"/bin`; do
+      ln -f -s "$PKG_BUILD_DIR"/bin/$p $BUILD_DIR/bin/$p
     done
   fi
 
@@ -454,4 +465,77 @@ function enable_toolchain_autotools() {
     PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/bin/:$PATH
     ACLOCAL_PATH=${BUILD_DIR}/libtool-${LIBTOOL_VERSION}/share/aclocal:${ACLOCAL_PATH:-}
     export ACLOCAL_PATH
+}
+
+# Usage: symlink_required_libs <src build dir> <dst build dir>
+# Finds all shared objects under the src build dir required by shared objects or binaries
+# in the dst build dir and add symlinks to a lib/ subdirectory where they will be on the
+# RPATH for src. Both paths should be relative paths, and the symlink constructed will be
+# a relative symlink.
+function symlink_required_libs() {
+  local src_dir=$1
+  local dst_dir=$2
+  local src_libs=$(find "$src_dir" -name '*.so*')
+
+  local executables=$(find "$dst_dir" -perm '/u=x,g=x,o=x' -type f)
+  local shared_libs=$(find "$dst_dir" -name '*.so*')
+
+  local file
+  for file in $executables $shared_libs; do
+    # Get the required libraries. If this is not a binary executable, this command fails
+    # and we can skip over the file.
+    if ! local required_libs=$(objdump -p "$file" 2>/dev/null | grep NEEDED | awk '{print $2}')
+    then
+      continue
+    fi
+
+    # Check for matches using the naive N^2 algorithm.
+    local required_lib
+    local src_lib
+    for required_lib in $required_libs; do
+      for src_lib in $src_libs; do
+        if [[ "$(basename $src_lib)" = "$required_lib" ]]; then
+          # We found a dependency.
+          symlink_lib "$src_lib" "$file"
+        fi
+      done
+    done
+  done
+}
+
+# Usage: symlink_lib <src lib> <binary>
+# Create a relative symlink to <src lib> where it will be picked up by <binary>.
+# <dst dir> and <binary> must be relative paths from the current directory.
+function symlink_lib() {
+  local src_lib=$1
+  local binary=$2
+  local binary_dir="$(dirname "$binary")"
+
+  # The lib/ subfolder is on the rpath of all binaries. Add a symlink there.
+  if [[ "$(basename "$binary_dir")" == "lib" ]]; then
+    # Don't insert extraneous ../lib
+    local dst_lib_dir="$binary_dir"
+  else
+    local dst_lib_dir="$binary_dir/../lib"
+  fi
+
+  # We need to figure out how many "../" are in the relative path from the dst dir to
+  # to the src dir, since the dst may be nested arbitrarily deeply (e.g. debug/bin/).
+  local rel_path=""
+  local curr_dir="$binary_dir"
+  while [[ "$curr_dir" != "." ]]; do
+    curr_dir="$(dirname "$curr_dir")"
+    rel_path="../$rel_path"
+  done
+
+  # Add the symlink if not already present.
+  mkdir -p "$dst_lib_dir"
+  pushd "$dst_lib_dir"
+  local lib_name="$(basename "$src_lib")"
+  [[ -f "$lib_name" ]] || ln -s "${rel_path}${src_lib}" "$lib_name"
+  if [[ ! -e "$lib_name" ]]; then
+    echo "Broken symlink $lib_name in $(pwd)"
+    return 1
+  fi
+  popd
 }

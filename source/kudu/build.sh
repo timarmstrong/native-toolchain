@@ -110,6 +110,19 @@ function build {
   sed -i -r "s:^(set\(IR_FLAGS):\1\n  --gcc-toolchain=$(dirname $(which $CXX))/..:" \
       src/kudu/codegen/CMakeLists.txt
 
+  # Kudu bootstraps some of its own binaries, but doesn't appear to add the GCC libraries
+  # to the rpath. Set LD_LIBRARY_PATH as a workaround.
+  if [[ -z "${LD_LIBRARY_PATH:-}" ]]; then
+    export LD_LIBRARY_PATH=""
+  else
+    export LD_LIBRARY_PATH=":${LD_LIBRARY_PATH}"
+  fi
+  if [[ "$OSTYPE" == "darwin"* ]]; then
+    LD_LIBRARY_PATH="$BUILD_DIR/gcc-$GCC_VERSION/lib${LD_LIBRARY_PATH}"
+  else
+    LD_LIBRARY_PATH="$BUILD_DIR/gcc-$GCC_VERSION/lib64${LD_LIBRARY_PATH}"
+  fi
+
   # Now Kudu can be built.
   RELEASE_INSTALL_DIR="$LOCAL_INSTALL/release"
   mkdir -p release_build_dir

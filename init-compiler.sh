@@ -45,13 +45,17 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   CC="$BUILD_DIR/gcc-$GCC_VERSION/bin/gcc"
   CXX="$BUILD_DIR/gcc-$GCC_VERSION/bin/g++"
 
-  # Upgrade rpath variable to catch current library location and possible future location
+  # Upgrade rpath variable to point to the ../lib/ subdirectory relative to the output
+  # binaries or libraries. Need to include versions with both $ORIGIN and $$ORIGIN to
+  # work around escaping in some makefile-based projects. This can add bad rpaths starting
+  # with "$$ORIGIN" or "RIGIN/" to different executables, but these are ignored by the
+  # linker and are harmless.
   if [[ "$OSTYPE" == "darwin"* ]]; then
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib,-rpath,'\$ORIGIN/../lib'"
+    FULL_RPATH="-Wl,-rpath,'\$ORIGIN/../lib',-rpath,'\$\$ORIGIN/../lib'"
   else
-    FULL_RPATH="-Wl,-rpath,$BUILD_DIR/gcc-$GCC_VERSION/lib64,-rpath,'\$ORIGIN/../lib64'"
+    FULL_RPATH="-Wl,-rpath,'\$ORIGIN/../lib64',-rpath,'\$\$ORIGIN/../lib64'"
   fi
-  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib'"
+  FULL_RPATH="${FULL_RPATH},-rpath,'\$ORIGIN/../lib',-rpath,'\$\$ORIGIN/../lib'"
 
   FULL_LPATH="-L$BUILD_DIR/gcc-$GCC_VERSION/lib64"
   LDFLAGS="$ARCH_FLAGS $FULL_RPATH $FULL_LPATH"
