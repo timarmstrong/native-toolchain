@@ -346,11 +346,18 @@ function build_dist_package() {
     RET_VAL=false
   fi
 
+  local GIT_HASH=$(git rev-parse HEAD)
+  # Get Jenkins build number or a unique id if we're not in jenkins.
+  local BUILD_ID=${BUILD_NUMBER:-$(cat /proc/sys/kernel/random/uuid)}
+  local BUILD_STRING="${GIT_HASH}-${BUILD_ID}"
+
+  echo "Build ID: $BUILD_ID Git Hash: $GIT_HASH Build String: $BUILD_STRING"
+
   # Package and upload the archive to the artifactory
   if [[ "PUBLISH_DEPENDENCIES" -eq "1" ]]; then
     mvn deploy:deploy-file -DgroupId=com.cloudera.toolchain\
       -DartifactId="${PACKAGE}"\
-      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}"\
+      -Dversion="${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}-${BUILD_STRING}"\
       -Dfile="${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz"\
       -Durl="http://maven.jenkins.cloudera.com:8081/artifactory/cdh-staging-local/"\
       -DrepositoryId=cdh.releases.repo -Dpackaging=tar.gz -Dclassifier=${label} || $RET_VAL
@@ -358,7 +365,7 @@ function build_dist_package() {
     # Publish to S3 as well
     if [[ -n "${AWS_ACCESS_KEY_ID}" && -n "${AWS_SECRET_ACCESS_KEY}" && -n "${S3_BUCKET}" ]]; then
       aws s3 cp "${BUILD_DIR}/${FULL_TAR_NAME}.tar.gz" \
-        s3://${S3_BUCKET}/build/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${FULL_TAR_NAME}-${label}.tar.gz \
+        s3://${S3_BUCKET}/build/${PACKAGE}/${PACKAGE_VERSION}${PATCH_VERSION}-${COMPILER}-${COMPILER_VERSION}/${BUILD_STRING}/${FULL_TAR_NAME}-${label}.tar.gz \
         --region=us-west-1 || $RET_VAL
     fi
 
