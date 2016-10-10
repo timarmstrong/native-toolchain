@@ -35,7 +35,7 @@ if needs_build_package ; then
   #   we have to define two very similar-looking options to get the
   #   desired behavior.
   wrap ./bootstrap --prefix=${LOCAL_INSTALL} --parallel=${BUILD_THREADS} \
-    --enable-ccache -- -DKWSYS_PROCESS_USE_SELECT=0 -DKWSYSPE_USE_SELECT=0
+    -- -DKWSYS_PROCESS_USE_SELECT=0 -DKWSYSPE_USE_SELECT=0
   wrap make -j${BUILD_THREADS}
   wrap make install
 
