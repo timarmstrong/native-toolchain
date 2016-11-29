@@ -41,7 +41,10 @@ source ./init.sh
 ################################################################################
 # Boost
 ################################################################################
-BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+if (( BUILD_HISTORICAL )) ; then
+  BOOST_VERSION=1.57.0 $SOURCE_DIR/source/boost/build.sh
+fi
+BOOST_VERSION=1.57.0-p1 $SOURCE_DIR/source/boost/build.sh
 
 ################################################################################
 # Build Python
