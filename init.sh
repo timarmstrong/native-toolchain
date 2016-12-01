@@ -27,6 +27,7 @@ set -o pipefail
 #  - PRODUCTION
 #  - SYSTEM_GCC
 #  - CLEAN
+#  - CLEAN_AFTER_BUILD
 #  - RELEASE_NAME
 #  - MACOSX_DEPLOYMENT_TARGET -- only on Mac OS X
 #  - ARCH_FLAGS
@@ -52,6 +53,10 @@ export PRODUCTION
 # Clean the complete build
 : ${CLEAN=0}
 export CLEAN
+
+# Clean the package directory after building each package.
+: ${CLEAN_AFTER_BUILD=0}
+export CLEAN_AFTER_BUILD
 
 : ${BINUTILS_VERSION=2.26-p1}
 export BINUTILS_VERSION
