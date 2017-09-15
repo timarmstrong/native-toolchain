@@ -21,6 +21,7 @@ prepare $THIS_DIR
 
 # Download the same dependencies that would have been downloaded by
 # gcc's ./contrib/download_prerequisites script.
+TARBALL_EXT=tar.gz
 if [[ $GCC_VERSION = '4.9.2' ]]; then
   MPFR_VERSION=2.4.2
   GMP_VERSION=4.3.2
@@ -33,12 +34,15 @@ elif [[ $GCC_VERSION = '6.3.0' ]]; then
   MPC_VERSION=0.8.1
   ISL_VERSION=0.15
   CLOOG_VERSION=0.18.1
-elif [[ $GCC_VERSION = '7.1.0' ]]; then
+elif [[ $GCC_VERSION = '7.1.0' || $GCC_VERSION = '7.3.0' ]]; then
   MPFR_VERSION=3.1.4
   GMP_VERSION=6.1.0
   MPC_VERSION=1.0.3
   ISL_VERSION=0.16.1
   CLOOG_VERSION=0.18.1
+  if [[ $GCC_VERSION = '7.3.0' ]]; then
+    TARBALL_EXT=tar.xz
+  fi
 else
   echo "Unknown gcc version $GCC_VERSION - don't know which dependencies to download"
   exit 1
@@ -66,7 +70,7 @@ function download_gcc_prerequisites() {
 }
 
 if [ ! -f $SOURCE_DIR/check/$PACKAGE_STRING ]; then
-  download_dependency $PACKAGE "${PACKAGE_STRING}.tar.gz" $THIS_DIR
+  download_dependency $PACKAGE "${PACKAGE_STRING}.${TARBALL_EXT}" $THIS_DIR
 
   # The call to setup_package_build() changes into the right directory, so it
   # needs to happen before downloading the remaining prerequisites.

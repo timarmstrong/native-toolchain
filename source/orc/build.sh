@@ -33,6 +33,8 @@ if needs_build_package ; then
     LZ4_LIB_DIR=$BUILD_DIR/lz4-${LZ4_VERSION}/lib64
   fi
 
+  # -Wno-error=conversion: avoid warning from gmock header.
+  export CXXFLAGS="-fPIC -DPIC -Wno-error=conversion"
   wrap cmake -DBUILD_SHARED_LIBS=ON \
       -DCMAKE_INSTALL_PREFIX=$LOCAL_INSTALL -DCMAKE_BUILD_TYPE=RELEASE \
       -DBUILD_JAVA=OFF -DBUILD_LZ4=OFF -DBUILD_PROTOBUF=OFF -DBUILD_SNAPPY=OFF \
@@ -46,6 +48,6 @@ if needs_build_package ; then
       -DSNAPPY_LIB_DIR=$BUILD_DIR/snappy-${SNAPPY_VERSION}/lib \
       -DZLIB_INCLUDE_DIRS=$BUILD_DIR/zlib-${ZLIB_VERSION}/include \
       -DZLIB_LIB_DIR=$BUILD_DIR/zlib-${ZLIB_VERSION}/lib
-  CFLAGS="-fPIC -DPIC" wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
+  wrap make VERBOSE=1 -j${BUILD_THREADS:-4} install
   finalize_package_build $PACKAGE $PACKAGE_VERSION
 fi
