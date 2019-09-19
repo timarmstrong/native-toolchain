@@ -95,7 +95,8 @@ function build {
   # to use it. ninja depends on the system libstdc++.so on some systems.
   OLD_PATH="$PATH"
   PATH="$BUILD_DIR/python-$PYTHON_VERSION/bin:$OLD_PATH"
-  LD_LIBRARY_PATH="" wrap ./build-if-necessary.sh
+  PATH="$BUILD_DIR/ninja-$NINJA_VERSION/bin:$OLD_PATH"
+  wrap ./build-if-necessary.sh
   cd ..
 
   # Update the PATH to include Kudu's toolchain binaries (after our toolchain's Python).

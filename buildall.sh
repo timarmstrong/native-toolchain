@@ -62,6 +62,11 @@ else
 fi
 
 ################################################################################
+# Build Ninja
+################################################################################
+PYTHON_VERSION=3.7.4 NINJA_VERSION=1.9.0 $SOURCE_DIR/source/ninja/build.sh
+
+################################################################################
 # LLVM
 ################################################################################
 # Build LLVM 3.3 with and without asserts.
@@ -311,6 +316,7 @@ FLATBUFFERS_VERSION=1.6.0 $SOURCE_DIR/source/flatbuffers/build.sh
   export BOOST_VERSION=1.57.0-p3
   export KUDU_VERSION=84086fe
   export PYTHON_VERSION=2.7.16
+  export NINJA_VERSION=1.9.0
   if $SOURCE_DIR/source/kudu/build.sh is_supported_platform; then
     $SOURCE_DIR/source/kudu/build.sh build
   else
