@@ -149,7 +149,7 @@ BISON_VERSION=3.0.4 $SOURCE_DIR/source/bison/build.sh
 #  * depends on bison, boost, zlib and openssl
 ################################################################################
 export BISON_VERSION=3.0.4
-export BOOST_VERSION=1.57.0-p3
+export BOOST_VERSION=1.61.0
 export ZLIB_VERSION=1.2.8
 export OPENSSL_VERSION=1.0.2l
 
