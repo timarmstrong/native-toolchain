@@ -78,6 +78,8 @@ if [[ $SYSTEM_GCC -eq 0 ]]; then
   else
     CXXFLAGS="$ARCH_FLAGS -fPIC -O3 -m64"
   fi
+  # -D_GLIBCXX_USE_CXX11_ABI - for now, use the old ABI to ease transition from GCC 4.9.2.
+  # CXXFLAGS+=" -D_GLIBCXX_USE_CXX11_ABI=0"
 else
   if [[ "$OSTYPE" == "darwin"* ]]; then
     CXX="g++ -stdlib=libstdc++"

@@ -39,6 +39,12 @@ elif [[ $GCC_VERSION = '7.1.0' ]]; then
   MPC_VERSION=1.0.3
   ISL_VERSION=0.16.1
   CLOOG_VERSION=0.18.1
+elif [[ $GCC_VERSION = '7.4.0' ]]; then
+  MPFR_VERSION=3.1.4
+  GMP_VERSION=6.1.0
+  MPC_VERSION=1.0.3
+  ISL_VERSION=0.16.1
+  CLOOG_VERSION=0.18.1
 else
   echo "Unknown gcc version $GCC_VERSION - don't know which dependencies to download"
   exit 1
